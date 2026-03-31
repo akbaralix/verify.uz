@@ -60,7 +60,7 @@ function Test() {
   const handleGetAIAnalysis = async () => {
     setIsAnalyzing(true);
     try {
-      const prompt = `Iste'molchi huquqlari bo'yicha quyidagi so'rovnoma javoblarini tahlil qiling va foydalanuvchiga tavsiyalar bering. Javobingizni o'zbek tilida, qisqa va lo'nda yozing:\n\n${submittedAnswers.map((a) => `Savol: ${a.questionTitle}\nJavob: ${a.answer}`).join("\n\n")}`;
+      const prompt = `Iste'molchi huquqlari bo'yicha quyidagi so'rovnoma javoblarini tahlil qiling va foydalanuvchiga tavsiyalar bering.Javob paytida foydalanuvchi ismini ham ishlatib u bilan yaqinroq aloqa va maslahat ber. Foydalanuvchi ismi ${username} Javobingizni o'zbek tilida, qisqa va lo'nda yozing:\n\n${submittedAnswers.map((a) => `Savol: ${a.questionTitle}\nJavob: ${a.answer}`).join("\n\n")}`;
 
       const response = await fetch(
         "https://api.groq.com/openai/v1/chat/completions",
@@ -136,6 +136,8 @@ function Test() {
               tahlili
             </h1>
             <p className="survey-subtitle">
+              {" "}
+              Salom {""}
               <span style={{ color: "black", fontWeight: "600" }}>
                 {username}
               </span>
@@ -216,7 +218,10 @@ function Test() {
                 <div className="checkmark-circle">
                   <div className="checkmark draw"></div>
                 </div>
-                <h2>Javoblaringiz uchun rahmat!</h2>
+                <h2>
+                  Javoblaringiz uchun rahmat {username || "foydalanuvchi"} !
+                </h2>
+
                 <p>So'rovnomada ishtirok etganingiz biz uchun muhim.</p>
                 <div className="success-actions">
                   <button className="ai-button" onClick={handleGetAIAnalysis}>

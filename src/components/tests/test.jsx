@@ -11,6 +11,10 @@ function Test() {
   const [answers, setAnswers] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [submittedAnswers, setSubmittedAnswers] = useState([]);
 
   const unansweredQuestions = useMemo(
     () =>
@@ -42,6 +46,49 @@ function Test() {
     navigate("/login");
   };
 
+  // AI matnidagi **bold** qismlarni formatlash uchun funksiya
+  const formatAiResponse = (text) => {
+    if (!text) return null;
+    return text.split(/(\*\*.*?\*\*)/g).map((part, index) => {
+      if (part.startsWith("**") && part.endsWith("**")) {
+        return <strong key={index}>{part.slice(2, -2)}</strong>;
+      }
+      return part;
+    });
+  };
+
+  const handleGetAIAnalysis = async () => {
+    setIsAnalyzing(true);
+    try {
+      const prompt = `Iste'molchi huquqlari bo'yicha quyidagi so'rovnoma javoblarini tahlil qiling va foydalanuvchiga tavsiyalar bering. Javobingizni o'zbek tilida, qisqa va lo'nda yozing:\n\n${submittedAnswers.map((a) => `Savol: ${a.questionTitle}\nJavob: ${a.answer}`).join("\n\n")}`;
+
+      const response = await fetch(
+        "https://api.groq.com/openai/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "llama-3.3-70b-versatile",
+            messages: [{ role: "user", content: prompt }],
+          }),
+        },
+      );
+
+      const data = await response.json();
+      setAiAnalysis(data.choices[0].message.content);
+    } catch (error) {
+      console.error("AI Analysis error:", error);
+      setAiAnalysis(
+        "Kechirasiz, tahlil jarayonida xatolik yuz berdi. Iltimos qaytadan urinib ko'ring.",
+      );
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -68,14 +115,9 @@ function Test() {
         answers: normalizedAnswers,
       });
 
-      setSubmitMessage(
-        "Javoblaringiz muvaffaqiyatli saqlandi. Ishtirokingiz uchun rahmat.",
-      );
+      setSubmittedAnswers(normalizedAnswers);
+      setShowSuccess(true);
       setAnswers({});
-      clearStoredUsername();
-      setTimeout(() => {
-        navigate("/login");
-      }, 1800);
     } catch (error) {
       setSubmitMessage(error.message);
     } finally {
@@ -165,6 +207,43 @@ function Test() {
           </button>
         </form>
       </div>
+
+      {showSuccess && (
+        <div className="success-overlay">
+          <div className={`success-card ${aiAnalysis ? "expanded" : ""}`}>
+            {!aiAnalysis && !isAnalyzing ? (
+              <>
+                <div className="checkmark-circle">
+                  <div className="checkmark draw"></div>
+                </div>
+                <h2>Javoblaringiz uchun rahmat!</h2>
+                <p>So'rovnomada ishtirok etganingiz biz uchun muhim.</p>
+                <div className="success-actions">
+                  <button className="ai-button" onClick={handleGetAIAnalysis}>
+                    AI tahlilni ko'rish
+                  </button>
+                  <button className="close-simple" onClick={handleLogout}>
+                    Yopish
+                  </button>
+                </div>
+              </>
+            ) : isAnalyzing ? (
+              <div className="ai-status">
+                <div className="ai-spinner"></div>
+                <p>AI javoblaringizni tahlil qilmoqda...</p>
+              </div>
+            ) : (
+              <div className="ai-result">
+                <h3>AI Tahlili</h3>
+                <div className="ai-content">{formatAiResponse(aiAnalysis)}</div>
+                <button className="close-success" onClick={handleLogout}>
+                  Tugatish
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

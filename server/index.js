@@ -12,6 +12,11 @@ const app = express();
 const PORT = Number(process.env.PORT) || 4000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "verifyuzakb";
 const REQUIRED_QUESTION_COUNT = 15;
+const SURVEY_TABLE = "survey_responses";
+
+function getSafeAnswers(response) {
+  return Array.isArray(response?.answers) ? response.answers : [];
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -54,8 +59,7 @@ app.post("/api/surveys", async (req, res) => {
     }
 
     const { db } = await connectToDatabase();
-
-    await db.collection("survey_responses").insertOne({
+    const { error } = await db.from(SURVEY_TABLE).insert({
       username,
       answers: answers.map((item) => ({
         questionId: item.questionId,
@@ -63,8 +67,12 @@ app.post("/api/surveys", async (req, res) => {
         type: item.type,
         answer: String(item.answer).trim(),
       })),
-      createdAt: new Date(),
+      created_at: new Date().toISOString(),
     });
+
+    if (error) {
+      throw new Error(error.message);
+    }
 
     return res.json({ success: true });
   } catch (error) {
@@ -84,17 +92,24 @@ app.post("/api/admin/stats", async (req, res) => {
     }
 
     const { db } = await connectToDatabase();
-    const responses = await db
-      .collection("survey_responses")
-      .find({})
-      .sort({ createdAt: -1 })
-      .toArray();
+    const { data: responses, error } = await db
+      .from(SURVEY_TABLE)
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    const safeResponses = responses || [];
 
     const questions = surveyQuestions.map((question) => {
-      const questionAnswers = responses
+      const questionAnswers = safeResponses
         .map((response) => ({
           username: response.username,
-          answer: response.answers.find((item) => item.questionId === question.id),
+          answer: getSafeAnswers(response).find(
+            (item) => item.questionId === question.id,
+          ),
         }))
         .filter((item) => item.answer);
 
@@ -132,7 +147,7 @@ app.post("/api/admin/stats", async (req, res) => {
     });
 
     return res.json({
-      totalResponses: responses.length,
+      totalResponses: safeResponses.length,
       questions,
     });
   } catch (error) {
@@ -149,6 +164,24 @@ app.use((_req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+async function startServer() {
+  try {
+    const { db } = await connectToDatabase();
+    const { error } = await db.from(SURVEY_TABLE).select("*").limit(1);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    console.log(`Supabase ga ulandi: ${process.env.SUPABASE_URL}`);
+
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error("Supabase ulanishida xato:", error.message);
+    process.exit(1);
+  }
+}
+
+startServer();

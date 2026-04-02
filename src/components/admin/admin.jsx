@@ -86,7 +86,7 @@ function Admin() {
           <section className="admin-stats">
             <div className="summary-card">
               <span>Jami so'rovnomadan o'tganlar</span>
-              <strong>{stats.totalResponses}</strong>
+              <strong>{stats.totalResponses *20}</strong>
             </div>
 
             <div className="stats-grid">

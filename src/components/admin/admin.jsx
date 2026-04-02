@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Bar,
   BarChart,
@@ -19,6 +19,7 @@ function Admin() {
   const [stats, setStats] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [hasLoadedStats, setHasLoadedStats] = useState(false);
 
   const handleLoadStats = async (event) => {
     event.preventDefault();
@@ -28,13 +29,32 @@ function Admin() {
     try {
       const data = await fetchAdminStats(password);
       setStats(data);
+      setHasLoadedStats(true);
     } catch (error) {
       setStats(null);
       setErrorMessage(error.message);
+      setHasLoadedStats(false);
     } finally {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!password || !hasLoadedStats) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(async () => {
+      try {
+        const data = await fetchAdminStats(password);
+        setStats(data);
+      } catch {
+        // Keep the last visible stats if a background refresh fails.
+      }
+    }, 5000);
+
+    return () => window.clearInterval(intervalId);
+  }, [password, hasLoadedStats]);
 
   return (
     <div className="admin-page">
@@ -65,7 +85,7 @@ function Admin() {
         {stats ? (
           <section className="admin-stats">
             <div className="summary-card">
-              <span>Jami so&apos;rovnoma</span>
+              <span>Jami so'rovnomadan o'tganlar</span>
               <strong>{stats.totalResponses}</strong>
             </div>
 
@@ -74,7 +94,9 @@ function Admin() {
                 <article className="stats-card" key={question.id}>
                   <div className="stats-card-head">
                     <p>{question.title}</p>
-                    <span>{question.type === "text" ? "Yozma javob" : "Foizlar"}</span>
+                    <span>
+                      {question.type === "text" ? "Yozma javob" : "Foizlar"}
+                    </span>
                   </div>
 
                   {question.type === "radio" ? (
@@ -86,7 +108,11 @@ function Admin() {
                             layout="vertical"
                             margin={{ top: 8, right: 16, left: 16, bottom: 8 }}
                           >
-                            <CartesianGrid horizontal stroke="#dbeafe" strokeDasharray="3 3" />
+                            <CartesianGrid
+                              horizontal
+                              stroke="#dbeafe"
+                              strokeDasharray="3 3"
+                            />
                             <XAxis
                               allowDecimals={false}
                               domain={[0, 100]}
@@ -109,7 +135,9 @@ function Admin() {
                             <Bar dataKey="percentage" radius={[0, 10, 10, 0]}>
                               {question.options.map((option, index) => (
                                 <Cell
-                                  fill={CHART_COLORS[index % CHART_COLORS.length]}
+                                  fill={
+                                    CHART_COLORS[index % CHART_COLORS.length]
+                                  }
                                   key={`${question.id}-${option.option}`}
                                 />
                               ))}

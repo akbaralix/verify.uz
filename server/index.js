@@ -36,9 +36,7 @@ app.post("/api/surveys", async (req, res) => {
     const answers = Array.isArray(payload.answers) ? payload.answers : [];
 
     if (username.length < 3) {
-      return res
-        .status(400)
-        .json({ message: "Foydalanuvchi ismi noto'g'ri." });
+      return res.status(400).json({ message: "Foydalanuvchi ismi noto'g'ri." });
     }
 
     if (answers.length !== REQUIRED_QUESTION_COUNT) {
@@ -53,9 +51,7 @@ app.post("/api/surveys", async (req, res) => {
     });
 
     if (hasInvalidAnswer) {
-      return res
-        .status(400)
-        .json({ message: "Javoblarning ayrimlari bo'sh." });
+      return res.status(400).json({ message: "Javoblarning ayrimlari bo'sh." });
     }
 
     const { db } = await connectToDatabase();
@@ -119,7 +115,7 @@ app.post("/api/admin/stats", async (req, res) => {
           title: question.title,
           type: question.type,
           responseCount: questionAnswers.length,
-          responses: questionAnswers.slice(0, 10).map((item) => ({
+          responses: questionAnswers.map((item) => ({
             username: item.username,
             answer: item.answer.answer,
           })),

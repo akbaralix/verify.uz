@@ -225,6 +225,10 @@ function Test() {
                 <p>So'rovnomada ishtirok etganingiz biz uchun muhim.</p>
                 <div className="success-actions">
                   <button className="ai-button" onClick={handleGetAIAnalysis}>
+                    <img
+                      src="https://cdn.iconscout.com/icon/premium/png-256-thumb/ai-icon-svg-download-png-10866613.png?f=webp&w=256"
+                      alt=""
+                    />
                     AI tahlilni ko'rish
                   </button>
                   <button className="close-simple" onClick={handleLogout}>

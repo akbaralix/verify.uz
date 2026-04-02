@@ -151,7 +151,7 @@ function Admin() {
                           <div className="option-stat-label">
                             <span>{option.option}</span>
                             <strong>
-                              {option.count * 20} ta / {option.percentage}%
+                              {option.count} ta / {option.percentage}%
                             </strong>
                           </div>
                           <div className="stat-bar">
@@ -165,9 +165,7 @@ function Admin() {
                     </div>
                   ) : (
                     <div className="text-stat-box">
-                      <strong>
-                        {question.responseCount * 20} ta yozma javob
-                      </strong>
+                      <strong>{question.responseCount} ta yozma javob</strong>
                       {question.responses.length > 0 ? (
                         <ul>
                           {question.responses.map((response, index) => (

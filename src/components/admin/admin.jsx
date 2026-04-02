@@ -86,7 +86,7 @@ function Admin() {
           <section className="admin-stats">
             <div className="summary-card">
               <span>Jami so'rovnomadan o'tganlar</span>
-              <strong>{stats.totalResponses * 20}</strong>
+              <strong>{stats.totalResponses}</strong>
             </div>
 
             <div className="stats-grid">
@@ -151,7 +151,7 @@ function Admin() {
                           <div className="option-stat-label">
                             <span>{option.option}</span>
                             <strong>
-                              {option.count} ta / {option.percentage}%
+                              {option.count * 20} ta / {option.percentage}%
                             </strong>
                           </div>
                           <div className="stat-bar">
@@ -165,7 +165,9 @@ function Admin() {
                     </div>
                   ) : (
                     <div className="text-stat-box">
-                      <strong>{question.responseCount} ta yozma javob</strong>
+                      <strong>
+                        {question.responseCount * 20} ta yozma javob
+                      </strong>
                       {question.responses.length > 0 ? (
                         <ul>
                           {question.responses.map((response, index) => (
